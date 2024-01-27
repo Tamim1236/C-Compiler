@@ -9,7 +9,7 @@
 //* ISSUES TO FIX:
 //* - can only process single digits for literal values => exit(42) processes as "...4, 2, )"
 
-// define enums
+// define enums 
 typedef enum{
   EXIT,
 } TypeKeyword;
@@ -22,6 +22,7 @@ typedef enum{
 
 typedef enum{
   INT,
+  DOUBLE
 } TypeLiteral;
 
 
@@ -40,41 +41,27 @@ typedef struct{
 } TokenLiteral;
 
 
-int generate_number(char current, FILE *file){
-  int* number = NULL; // dynamic array
-  int allocated_size = 2; //space for 1-digit number (with '\0' at end)
-  number[allocated_size - 1] = '\0';
-  int curr_len = 1; //track current length of number (current number of digits seen)
+TokenLiteral generate_number(char current, FILE *file){
+  TokenLiteral number_token;
+  number_token.type = INT; // to be changed -- if '.' encountered => decimal literal
   
-  while(isdigit(current)){
-    printf("here is the current digit: %c\n", current);
-    number[curr_len - 1] = current - '0'; // add digit to array
-    
-    if(curr_len + 1 == allocated_size){
-      allocated_size *= 2;
-      number = (int*) realloc(number, sizeof(int) * allocated_size);
-      number[allocated_size - 1] = '\0';
-    }
-    
-    //next char in file
+  char* value = malloc(sizeof(char) * 8); //get entire number
+  int index = 0;
+
+  while(isdigit(current) && current != EOF){
+    value[index] = current;
+    index++;
+    //printf("%c\n", current);
     current = fgetc(file);
-    curr_len += 1;
   }
-
-  //convert int array into int and return
-  int total = 0;
-  for(int i = 0; i < curr_len - 1; i++){
-    printf("Inside for loop with i = %d\n", i);
-    // if(!number[i]){
-    //   break;
-    // }
-    // else{
-    total += number[i] * pow(10, curr_len-1 - i);
-    // }
-  }
-
+  value[index] = '\0';
+  // printf("here is the number: %s\n", value);
+  
+  //convert the string to a number
+  number_token.value = atoi(value); // convert value from string to int
+  free(value);
   ungetc(current, file);
-  return total;
+  return number_token;
 }
 
 
@@ -83,20 +70,19 @@ void lexer(FILE * file){
   bool processed_number = false;
   
   while(current != EOF){
-    if(current == ';'){
-      printf("FOUND SEMI\n");
-    }
-    else if(current == '('){
+    
+    if(current == '('){
       printf("FOUND OPEN PAREN\n");
     }
     else if(current == ')'){
       printf("FOUND CLOSING PAREN\n");
     }
+    else if(current == ';'){
+      printf("FOUND SEMI\n");
+    }
     else if(isdigit(current)){
-      int number = generate_number(current, file);
-      printf("FOUND NUMBER: %d\n", number);
-      processed_number = true;
-      //printf("FOUND DIGIT: %c\n", current);
+      TokenLiteral int_literal = generate_number(current, file);
+      printf("FOUND INTEGER: %d\n", int_literal.value);
     }
     else if(isalpha(current)){
       printf("FOUND CHARACTER: %c\n", current);
