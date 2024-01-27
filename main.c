@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <ctype.h>
+#include <math.h>
 
 // we start with just the exit(1);
 
@@ -37,32 +39,71 @@ typedef struct{
   int value;
 } TokenLiteral;
 
-void generate_nuimber(char current, FILE *file){
-  while(current != EOF){
-    printf("%c\n", current);
+
+int generate_number(char current, FILE *file){
+  int* number = NULL; // dynamic array
+  int allocated_size = 2; //space for 1-digit number (with '\0' at end)
+  number[allocated_size - 1] = '\0';
+  int curr_len = 1; //track current length of number (current number of digits seen)
+  
+  while(isdigit(current)){
+    printf("here is the current digit: %c\n", current);
+    number[curr_len - 1] = current - '0'; // add digit to array
+    
+    if(curr_len + 1 == allocated_size){
+      allocated_size *= 2;
+      number = (int*) realloc(number, sizeof(int) * allocated_size);
+      number[allocated_size - 1] = '\0';
+    }
+    
+    //next char in file
     current = fgetc(file);
+    curr_len += 1;
   }
+
+  //convert int array into int and return
+  int total = 0;
+  for(int i = 0; i < curr_len - 1; i++){
+    printf("Inside for loop with i = %d\n", i);
+    // if(!number[i]){
+    //   break;
+    // }
+    // else{
+    total += number[i] * pow(10, curr_len-1 - i);
+    // }
+  }
+
+  ungetc(current, file);
+  return total;
 }
 
 
 void lexer(FILE * file){
-  char current = fgetc(file);
-
+  char current = fgetc(file); //* fgetc() returns int (ASCII val or EOF) + forwards internal file position indicator
+  bool processed_number = false;
+  
   while(current != EOF){
     if(current == ';'){
-      printf("FOUND SEMI\n ");
-    }else if(current == '('){
+      printf("FOUND SEMI\n");
+    }
+    else if(current == '('){
       printf("FOUND OPEN PAREN\n");
-    }else if(current == ')'){
+    }
+    else if(current == ')'){
       printf("FOUND CLOSING PAREN\n");
-    }else if(isdigit(current)){
-      printf("FOUND DIGIT: %c\n", current);
-    }else if(isalpha(current)){
+    }
+    else if(isdigit(current)){
+      int number = generate_number(current, file);
+      printf("FOUND NUMBER: %d\n", number);
+      processed_number = true;
+      //printf("FOUND DIGIT: %c\n", current);
+    }
+    else if(isalpha(current)){
       printf("FOUND CHARACTER: %c\n", current);
     }
 
-    // printf("%c\n", current);
-    current = fgetc(file);
+    if(processed_number == true) processed_number = false;    
+    else current = fgetc(file);
   }
 }
 
