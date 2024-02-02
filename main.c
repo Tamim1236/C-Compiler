@@ -41,7 +41,7 @@ typedef struct{
 } TokenLiteral;
 
 
-TokenLiteral generate_number(char current, FILE *file){
+TokenLiteral get_number(char current, FILE *file){
   TokenLiteral number_token;
   number_token.type = INT; // to be changed -- if '.' encountered => decimal literal
   
@@ -49,7 +49,7 @@ TokenLiteral generate_number(char current, FILE *file){
   int index = 0;
 
   while(isdigit(current) && current != EOF){
-    value[index] = current;
+    value[index] = current; 
     index++;
     //printf("%c\n", current);
     current = fgetc(file);
@@ -62,6 +62,28 @@ TokenLiteral generate_number(char current, FILE *file){
   free(value);
   ungetc(current, file);
   return number_token;
+}
+
+TokenKeyword get_keyword(char current, FILE * file){
+  TokenKeyword keyword_token;
+  
+  char* keyword = malloc(sizeof(char) * 8);
+  int index = 0;
+
+  while(isalpha(current) && current != EOF){
+    keyword[index] = current;
+    index++;
+    current = fgetc(file);
+  }
+  keyword[index] = '\0';
+
+  if(keyword == "exit"){
+    keyword_token.type = EXIT;
+  }
+  
+  free(keyword);
+  ungetc(current, file);
+  return keyword_token;
 }
 
 
@@ -81,7 +103,7 @@ void lexer(FILE * file){
       printf("FOUND SEMI\n");
     }
     else if(isdigit(current)){
-      TokenLiteral int_literal = generate_number(current, file);
+      TokenLiteral int_literal = get_number(current, file);
       printf("FOUND INTEGER: %d\n", int_literal.value);
     }
     else if(isalpha(current)){
