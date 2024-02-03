@@ -1,129 +1,140 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include <ctype.h>
 #include <math.h>
 
-// we start with just the exit(1);
-
-//* ISSUES TO FIX:
-//* - can only process single digits for literal values => exit(42) processes as "...4, 2, )"
-
-// define enums 
-typedef enum{
-  EXIT,
-} TypeKeyword;
-
-typedef enum{
-  SEMI,
-  OPEN_PAREN,
-  CLOSE_PAREN,
-} TypeSeperator;
-
 typedef enum{
   INT,
-  DOUBLE
-} TypeLiteral;
-
-
-//define structs
-typedef struct{
-  TypeKeyword type;
-} TokenKeyword;
+  KEYWORD,
+  SEPARATOR,
+}TokenType;
 
 typedef struct{
-  TypeSeperator type;
-} TokenSeperator;
+  TokenType type;
+  char *value;
+} Token;
 
-typedef struct{
-  TypeLiteral type;
-  int value;
-} TokenLiteral;
+void print_token(Token* token){
+  printf("TOKEN: %s\n", token->value);
+  printf("TOKEN TYPE: ");
+  if(token->type == INT) printf("INT\n");
+  if(token->type == KEYWORD) printf("KEYWORD\n");
+  if(token->type == SEPARATOR) printf("SEPARATOR\n");
+
+  printf("\n");
+}
+
+void cleanup_token(Token* token){
+  if(token != NULL){
+    free(token->value);
+    free(token);
+  }
+}
 
 
-TokenLiteral get_number(char current, FILE *file){
-  TokenLiteral number_token;
-  number_token.type = INT; // to be changed -- if '.' encountered => decimal literal
+Token* get_number(char current, FILE *file){
+  Token* number_token = malloc(sizeof(Token));
+  number_token->type = INT;
   
-  char* value = malloc(sizeof(char) * 8); //get entire number
+  char* value = malloc(sizeof(char) * 8); 
   int index = 0;
 
   while(isdigit(current) && current != EOF){
-    value[index] = current; 
-    index++;
-    //printf("%c\n", current);
+    value[index++] = current; 
     current = fgetc(file);
   }
   value[index] = '\0';
-  // printf("here is the number: %s\n", value);
   
-  //convert the string to a number
-  number_token.value = atoi(value); // convert value from string to int
-  free(value);
-  ungetc(current, file);
+  number_token->value = value;
+
+  ungetc(current, file); // push back the non-digit character
   return number_token;
 }
 
-TokenKeyword get_keyword(char current, FILE * file){
-  TokenKeyword keyword_token;
+Token *get_keyword(char current, FILE * file){
+  Token* keyword_token = malloc(sizeof(Token));
+  keyword_token->type = KEYWORD;
   
   char* keyword = malloc(sizeof(char) * 8);
   int index = 0;
 
   while(isalpha(current) && current != EOF){
-    keyword[index] = current;
-    index++;
+    keyword[index++] = current;
     current = fgetc(file);
   }
   keyword[index] = '\0';
 
-  if(keyword == "exit"){
-    keyword_token.type = EXIT;
+  if(strcmp(keyword, "exit") == 0){
+    keyword_token->value = strdup("EXIT");
+  }
+  else{
+    keyword_token->value = keyword; // directly assign the dynamically allocated keyword
   }
   
-  free(keyword);
   ungetc(current, file);
   return keyword_token;
 }
 
 
 void lexer(FILE * file){
-  char current = fgetc(file); //* fgetc() returns int (ASCII val or EOF) + forwards internal file position indicator
-  bool processed_number = false;
+  char current; 
   
-  while(current != EOF){
-    
+  //* fgetc() returns int (ASCII val or EOF) + forwards internal file position indicator
+  while((current = fgetc(file)) != EOF){
+
     if(current == '('){
-      printf("FOUND OPEN PAREN\n");
+      Token* open_bracket_token = malloc(sizeof(Token));
+      open_bracket_token->type = SEPARATOR;
+      open_bracket_token->value = strdup("(");
+
+      print_token(open_bracket_token);
+
+      cleanup_token(open_bracket_token);
     }
     else if(current == ')'){
-      printf("FOUND CLOSING PAREN\n");
+      Token* close_bracket_token = malloc(sizeof(Token));
+      close_bracket_token->type = SEPARATOR;
+      close_bracket_token->value = strdup(")");
+      print_token(close_bracket_token);
+
+      cleanup_token(close_bracket_token);
     }
     else if(current == ';'){
-      printf("FOUND SEMI\n");
+      Token* semicolon_token = malloc(sizeof(Token));
+      semicolon_token->type = SEPARATOR;
+      semicolon_token->value = strdup(";");
+      print_token(semicolon_token);
+
+      cleanup_token(semicolon_token);
     }
     else if(isdigit(current)){
-      TokenLiteral int_literal = get_number(current, file);
-      printf("FOUND INTEGER: %d\n", int_literal.value);
+      Token* int_literal = get_number(current, file);
+      print_token(int_literal);
+
+      cleanup_token(int_literal);
     }
     else if(isalpha(current)){
-      printf("FOUND CHARACTER: %c\n", current);
-    }
+      Token* keyword = get_keyword(current, file);
+      print_token(keyword);
 
-    if(processed_number == true) processed_number = false;    
-    else current = fgetc(file);
+      cleanup_token(keyword);
+    }
   }
 }
 
 
 int main(){
-  FILE *file;
-  file = fopen("test.unn", "r");
+  FILE *file = fopen("test.unn", "r");
+  
+  if(file == NULL){
+    printf("Error opening file\n");
+    return 1;
+  }
   
   lexer(file);
+  fclose(file);
 
-  // TokenLiteral token;
-  // token.type = INT;
-  // token.value = 5;
-  // printf("%d\n", token.value);
+  return 0;
 }
