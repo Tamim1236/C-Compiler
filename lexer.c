@@ -9,11 +9,23 @@
 
 void print_token(Token* token){
   printf("TOKEN: %s\n", token->value);
+  
   printf("TOKEN TYPE: ");
-  if(token->type == INT) printf("INT\n");
-  if(token->type == KEYWORD) printf("KEYWORD\n");
-  if(token->type == SEPARATOR) printf("SEPARATOR\n");
-
+  switch(token->type){
+    case BEGINNING:
+      printf("BEGINNING\n");
+      break;
+    case INT:
+      printf("INT\n");
+      break;
+    case KEYWORD:
+      printf("KEYWORD\n");
+      break;
+    case SEPARATOR:
+      printf("SEPARATOR\n");
+      break;
+  }
+  
   printf("\n");
 }
 
@@ -94,7 +106,7 @@ void lexer(FILE *file, Token *tokens, int *len){
     if(current == '('){
       Token* open_bracket_token = malloc(sizeof(Token));
       open_bracket_token->type = SEPARATOR;
-      open_bracket_token->value = strdup("(");
+      open_bracket_token->value = strdup("("); //! DO I need to malloc() for the values as well or does strdup() cover it?
 
       //print_token(open_bracket_token);
 
