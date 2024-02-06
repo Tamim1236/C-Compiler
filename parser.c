@@ -40,10 +40,12 @@ void print_tree(Node *node, int indent, char *identifier){
     printf(" ");
   }
   printf("%s -> ", identifier);
-  for(size_t i = 0; node->value[i] != '\0'; i++){
-    printf("%c", node->value[i]);
-  }
-  printf("\n");
+
+  printf("%s\n", node->value);
+  // for(size_t i = 0; node->value[i] != '\0'; i++){
+  //   printf("%c", node->value[i]);
+  // }
+  // printf("\n");
   print_tree(node->left, indent + 2, "left");
   print_tree(node->right, indent + 2, "right");
 }
@@ -145,7 +147,6 @@ Token *parser(Token *tokens/*, int* tokens_len*/){
 
       printf("EXIT\n");
       //break;
-      //printf("ayo the token length is %d\n", *tokens_len);
     //}
 
 

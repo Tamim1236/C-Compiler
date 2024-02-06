@@ -146,7 +146,7 @@ void lexer(FILE *file, Token *tokens, int *len){
       //cleanup_token(keyword);
     }
     else{
-      printf("ERROR: UNRECOGNIZED CHARACTER\n");
+      printf("ERROR: UNRECOGNIZED CHARACTER of -- %c --\n", current);
       exit(1);
     }
   }  
