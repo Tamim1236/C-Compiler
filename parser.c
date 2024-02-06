@@ -22,22 +22,41 @@ Node *init_node(Node *node, char *value, TokenType type){
   return node;
 }
 
-void print_tree(Node *node){
+// void print_tree(Node *node){
+//   if(node == NULL){
+//     return;
+//   }
+
+//   printf("    %s\n", node->value);
+//   print_tree(node->left);
+//   print_tree(node->right);
+// }
+
+void print_tree(Node *node, int indent, char *identifier){
   if(node == NULL){
     return;
   }
-
-  printf("    %s\n", node->value);
-  print_tree(node->left);
-  print_tree(node->right);
+  for(int i = 0; i < indent; i++){
+    printf(" ");
+  }
+  printf("%s -> ", identifier);
+  for(size_t i = 0; node->value[i] != '\0'; i++){
+    printf("%c", node->value[i]);
+  }
+  printf("\n");
+  print_tree(node->left, indent + 2, "left");
+  print_tree(node->right, indent + 2, "right");
 }
 
+void print_error_type(char *error_type){
+  printf("ERROR: %s\n", error_type);
+  exit(1);
+}
 
+ 
 Token *parser(Token *tokens/*, int* tokens_len*/){
   printf("ENTERING THE PARSER FUNCTION\n");
-  //printf("ayo the token length is %d\n", *tokens_len);
   Token *current_token = &tokens[0];
-  printf("HMM???\n");
   Node *root = malloc(sizeof(Node));
   root = init_node(root, "PROGRAM", BEGINNING);
   Node *curr = root; // current node in our tree
@@ -52,9 +71,11 @@ Token *parser(Token *tokens/*, int* tokens_len*/){
       case BEGINNING:
         break;
       case INT:
+        printf("Integer\n");
         break;
-      case KEYWORD:
-        if(strcmp(current_token->value, "exit")){
+      case KEYWORD:{
+        if(strcmp(current_token->value, "EXIT") == 0){
+          printf("seen EXIT\n");
           Node *exit_node = malloc(sizeof(Node));
           exit_node = init_node(exit_node, current_token->value, KEYWORD);
           root->right = exit_node;
@@ -62,28 +83,32 @@ Token *parser(Token *tokens/*, int* tokens_len*/){
           curr = exit_node;
           current_token++;
 
-          if(strcmp(current_token->value, "(") == 0 && current_token->type == SEPARATOR){
+          if(current_token->value != NULL && strcmp(current_token->value, "(") == 0 && current_token->type == SEPARATOR){
+            printf("Seen OPEN PAREN\n");
             Node *open_paren_node = malloc(sizeof(Node));
             open_paren_node = init_node(open_paren_node, current_token->value, SEPARATOR);
 
             curr->left = open_paren_node;
             current_token++;
 
-            if(current_token->type == INT){
+            if(current_token->value != NULL && current_token->type == INT){
+              printf("Seen INT LITERAL\n");
               Node *expression_node = malloc(sizeof(Node));
               expression_node = init_node(expression_node, current_token->value, INT);
               
               curr->left->left = expression_node;
               current_token++;
 
-              if(strcmp(current_token->value, ")") == 0 && current_token->type == SEPARATOR){
+              if(current_token->value != NULL && strcmp(current_token->value, ")") == 0 && current_token->type == SEPARATOR){
+                printf("Seen CLOSE PAREN\n");
                 Node *close_paren_node = malloc(sizeof(Node));
                 close_paren_node = init_node(close_paren_node, current_token->value, SEPARATOR);
                 
                 curr->left->right = close_paren_node;
                 current_token++;
 
-                if(strcmp(current_token->value, ";") == 0 && current_token->type == SEPARATOR){
+                if(current_token->value != NULL && strcmp(current_token->value, ";") == 0 && current_token->type == SEPARATOR){
+                  printf("Seen SEMI\n");
                   Node* semi_node = malloc(sizeof(Node));
                   semi_node = init_node(semi_node, current_token->value, SEPARATOR);
                   curr->right = semi_node;
@@ -111,12 +136,12 @@ Token *parser(Token *tokens/*, int* tokens_len*/){
         }
         current_token++;
         break;
-      
+      }
       case SEPARATOR:
         break;
     }
 
-      print_tree(root);
+      print_tree(root, 2, "start");
 
       printf("EXIT\n");
       //break;

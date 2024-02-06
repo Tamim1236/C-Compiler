@@ -28,9 +28,9 @@ int main(int argc, char *argv[]){
 
   print_all_tokens(tokens, *tokens_len);
 
-  printf("HELLO?\n");
+  // printf("HELLO?\n");
   parser(tokens, *tokens_len);
-  printf("WERE BACK?\n");
+  // printf("WERE BACK?\n");
 
   //cleanup_all_tokens(tokens, *tokens_len);
   fclose(file);
